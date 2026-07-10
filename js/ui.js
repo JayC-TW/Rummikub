@@ -210,6 +210,13 @@ function onPointerDown(e) {
   };
   window.addEventListener('pointermove', onPointerMove);
   window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerCancel);
+}
+
+/** 瀏覽器接管手勢（例如手牌區左右捲動）時會發出 pointercancel：放棄拖曳、還原狀態 */
+function onPointerCancel(e) {
+  if (e.pointerId !== dragCtx.pointerId) return;
+  endDragCleanup();
 }
 
 function onPointerMove(e) {
@@ -240,6 +247,7 @@ function startDrag(e) {
 function endDragCleanup() {
   window.removeEventListener('pointermove', onPointerMove);
   window.removeEventListener('pointerup', onPointerUp);
+  window.removeEventListener('pointercancel', onPointerCancel);
   if (dragCtx.ghostEl) dragCtx.ghostEl.remove();
   if (dragCtx.sourceEl) dragCtx.sourceEl.classList.remove('source-hidden');
   dragCtx.ghostEl = null;

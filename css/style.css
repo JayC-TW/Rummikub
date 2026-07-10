@@ -227,9 +227,14 @@ html, body {
   display: flex;
   gap: 4px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* iOS 慣性捲動 */
   padding: 6px 4px;
   min-height: 70px;
 }
+
+/* 手牌允許水平滑動捲動（pan-x）：左右滑=捲動手牌、往上拖=拖牌出去。
+   桌面牌仍維持 touch-action:none 以確保拖曳靈敏。 */
+#hand-area .tile { touch-action: pan-x; }
 
 /* ===== 結束畫面 ===== */
 #end-screen { align-items: center; justify-content: center; padding: 24px; }
