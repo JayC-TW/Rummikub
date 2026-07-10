@@ -83,6 +83,16 @@ function render() {
   renderBoard();
   renderHand();
   renderControls();
+
+  // 拖曳中若發生重繪（例如計時器每秒更新），重建後的來源牌會失去隱藏狀態
+  // 而與半透明分身同時出現（殘影）。這裡重新找到來源牌並隱藏、更新參照。
+  if (dragCtx.dragging && dragCtx.sourceInfo) {
+    const el = document.querySelector(`.tile[data-uid="${dragCtx.sourceInfo.uid}"]`);
+    if (el) {
+      el.classList.add('source-hidden');
+      dragCtx.sourceEl = el;
+    }
+  }
 }
 
 function renderOpponents() {
@@ -197,6 +207,8 @@ function attachDragHandlers(el) {
 
 function onPointerDown(e) {
   if (!isHumanTurn()) return;
+  // 若前一次拖曳尚未收尾（例如多指觸控、事件遺失），先清乾淨避免殘影
+  if (dragCtx.pointerId !== null) endDragCleanup();
   const el = e.currentTarget;
   dragCtx.pointerId = e.pointerId;
   dragCtx.startX = e.clientX;
@@ -357,6 +369,16 @@ function setupAreaLevelDrop() {
 // ---------- 按鈕事件 ----------
 
 function setupButtons() {
+  $('#btn-restart').addEventListener('click', () => {
+    if (!window.confirm('確定要重新開始嗎？目前對局將直接結束。')) return;
+    Game.abortGame();
+    endDragCleanup();
+    clearSelection();
+    $('#game-screen').hidden = true;
+    $('#end-screen').hidden = true;
+    $('#start-screen').hidden = false;
+    updateStatsLine();
+  });
   $('#btn-music').addEventListener('click', () => {
     const on = toggleMusic();
     $('#btn-music').textContent = on ? '🎵' : '🔇';

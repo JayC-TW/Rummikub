@@ -274,6 +274,13 @@ function cleanupEmptySets() {
 
 // ---------- 回合控制 ----------
 
+/** 中止目前對局（重新開始時使用）：停止計時器並標記結束，讓進行中的 AI 思考延遲失效 */
+export function abortGame() {
+  if (!state) return;
+  clearTimer();
+  state.gameOver = true;
+}
+
 export function undoTurn() {
   const p = currentPlayer();
   state.draftBoard = cloneSets(state.board);
@@ -411,7 +418,9 @@ function runAiTurn() {
   state.aiThinking = true;
   listeners.render();
 
+  const gameRef = state; // 記住本局的 state，若期間重新開始（state 被換掉）則不執行
   setTimeout(() => {
+    if (state !== gameRef || state.gameOver) return;
     state.aiThinking = false;
     applyAiAction(p, action);
   }, action.thinkMs);
