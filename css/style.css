@@ -230,7 +230,9 @@ html, body {
   -webkit-overflow-scrolling: touch; /* iOS 慣性捲動 */
   padding: 6px 4px;
   min-height: 70px;
+  scrollbar-width: none; /* Firefox：隱藏捲軸（仍可捲動） */
 }
+#hand-area::-webkit-scrollbar { display: none; } /* Chrome/Safari/Edge：隱藏捲軸（仍可捲動） */
 
 /* 手牌允許水平滑動捲動（pan-x）：左右滑=捲動手牌、往上拖=拖牌出去。
    桌面牌仍維持 touch-action:none 以確保拖曳靈敏。 */
