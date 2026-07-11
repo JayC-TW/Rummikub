@@ -1,4 +1,5 @@
 import { createDeck } from '../js/rules.js';
+import { decideAiTurn } from '../js/ai.js';
 
 export function createGameSession(room) {
   const deck = createDeck();
@@ -50,4 +51,54 @@ export function gameViewFor(room, viewerId) {
     turnSeconds: game.turnSeconds,
     round: game.round,
   };
+}
+
+export function prepareAiTurn(room) {
+  const game = room.game;
+  const player = game.players[game.currentPlayerIndex];
+  if (!player?.isAI || game.gameOver) return null;
+  const action = decideAiTurn({
+    hand: player.hand.map((tile) => ({ ...tile })),
+    board: game.board.map((set) => set.tiles),
+    hasMelded: player.hasMelded,
+    level: player.level,
+  });
+  return { playerId: player.id, action };
+}
+
+export function applyPreparedAiTurn(room, prepared) {
+  const game = room.game;
+  const player = game.players[game.currentPlayerIndex];
+  if (!player || player.id !== prepared.playerId || game.gameOver) return false;
+  const action = prepared.action;
+
+  if (action.type === 'draw') {
+    const tile = game.deck.pop();
+    if (tile) player.hand.push(tile);
+  } else {
+    const usedUids = new Set();
+    const newSets = (action.newSets ?? []).map((tiles, index) => ({
+      id: `set-${game.round}-${game.currentPlayerIndex}-${index}-${Date.now()}`,
+      tiles: tiles.map((tile) => ({ ...tile })),
+    }));
+    for (const set of newSets) for (const tile of set.tiles) usedUids.add(tile.uid);
+
+    for (const edit of action.boardEdits ?? []) {
+      if (!game.board[edit.index]) continue;
+      game.board[edit.index].tiles = edit.tiles.map((tile) => ({ ...tile }));
+      for (const tile of edit.tiles) usedUids.add(tile.uid);
+    }
+    game.board.push(...newSets);
+    player.hand = player.hand.filter((tile) => !usedUids.has(tile.uid));
+    if (action.type === 'meld') player.hasMelded = true;
+  }
+
+  if (player.hand.length === 0) {
+    game.gameOver = true;
+    game.winnerId = player.id;
+    return true;
+  }
+  game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
+  game.round += 1;
+  return true;
 }

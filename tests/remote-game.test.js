@@ -27,4 +27,5 @@ test('尚無本機牌局時可直接載入多人開局狀態', () => {
   assert.equal(state.players[0].hand.length, 14);
   assert.equal(state.players[1].hand.length, 14);
   assert.equal(state.players[1].hand.every((tile) => tile.hidden), true);
+  assert.deepEqual(state.players[0].hand.slice(0, 3).map((tile) => tile.number), [1, 1, 2]);
 });

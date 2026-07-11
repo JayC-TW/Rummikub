@@ -131,6 +131,14 @@ export class RoomManager {
       player.socket.send(JSON.stringify({ type: 'game:started', payload: state }));
     }
   }
+
+  gameFor(socket) {
+    const membership = this.memberships.get(socket);
+    if (!membership) throw new Error('你尚未加入房間');
+    const room = this.rooms.get(membership.code);
+    if (!room?.started || !room.game) throw new Error('遊戲尚未開始');
+    return { room, state: gameViewFor(room, membership.playerId) };
+  }
 }
 
 export function normalizeMaxPlayers(value) {

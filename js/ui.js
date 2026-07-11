@@ -6,7 +6,7 @@ import * as Game from './game.js';
 import { classifySet, COLOR_NAMES } from './rules.js';
 import { LEVEL_LABEL } from './game.js';
 import { startMusic, toggleMusic } from './music.js';
-import { connectMultiplayer, createRoom, joinRoom, leaveRoom, startMultiplayerGame } from './multiplayer.js';
+import { connectMultiplayer, createRoom, joinRoom, leaveRoom, startMultiplayerGame, syncMultiplayerGame } from './multiplayer.js';
 
 // ---------- 共用小工具 ----------
 
@@ -478,7 +478,10 @@ async function ensureMultiplayerConnection() {
         multiplayerPlayerId = playerId;
         renderRoomLobby(room);
       },
-      onRoomState: (room) => renderRoomLobby(room),
+      onRoomState: (room) => {
+        renderRoomLobby(room);
+        if (room.started && $('#game-screen').hidden) syncMultiplayerGame();
+      },
       onGameStarted: (gameState) => showMultiplayerGame(gameState),
       onLeft: () => showMultiplayerForm(),
       onError: (message) => {

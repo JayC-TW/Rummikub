@@ -37,3 +37,4 @@ export const createRoom = (playerName, config) => send('room:create', { playerNa
 export const joinRoom = (roomCode, playerName) => send('room:join', { roomCode, playerName });
 export const leaveRoom = () => send('room:leave');
 export const startMultiplayerGame = () => send('game:start');
+export const syncMultiplayerGame = () => send('game:sync');

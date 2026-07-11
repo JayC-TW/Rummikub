@@ -82,6 +82,7 @@ export function loadRemoteGame(remoteState) {
       ? cloneTiles(player.hand)
       : Array.from({ length: player.handCount }, (_, index) => ({ uid: `hidden-${player.id}-${index}`, hidden: true })),
   }));
+  sortHand(players[0].hand);
   state = {
     players,
     board: cloneSets(remoteState.board),

@@ -77,6 +77,16 @@ test('開局狀態只向玩家公開自己的手牌', () => {
   assert.notDeepEqual(hostView.players[0].hand, guestView.players[0].hand);
 });
 
+test('房主可在漏接開局事件後重新同步牌局', () => {
+  const manager = new RoomManager();
+  const hostSocket = socket();
+  manager.createRoom('Jay', hostSocket, config);
+  const room = manager.start(hostSocket);
+  const synced = manager.gameFor(hostSocket);
+  assert.equal(synced.room.code, room.code);
+  assert.equal(synced.state.players[0].hand.length, 14);
+});
+
 test('遊戲開始後斷線玩家由中級電腦原座位接手', () => {
   const manager = new RoomManager();
   const hostSocket = socket();

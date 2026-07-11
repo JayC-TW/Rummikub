@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { WebSocketServer } from 'ws';
 import { RoomManager, normalizePlayerName, normalizeRoomCode } from './room-manager.js';
+import { applyPreparedAiTurn, prepareAiTurn } from './game-session.js';
 
 const allowedOrigins = new Set([
   'http://localhost:8000',
@@ -21,6 +22,18 @@ const server = http.createServer((request, response) => {
 
 const wss = new WebSocketServer({ noServer: true });
 const rooms = new RoomManager();
+
+function scheduleAiTurn(room) {
+  if (room.aiTimer || !room.game || room.game.gameOver) return;
+  const prepared = prepareAiTurn(room);
+  if (!prepared) return;
+  room.aiTimer = setTimeout(() => {
+    room.aiTimer = null;
+    if (!applyPreparedAiTurn(room, prepared)) return;
+    rooms.broadcastGame(room);
+    scheduleAiTurn(room);
+  }, prepared.action.thinkMs);
+}
 
 server.on('upgrade', (request, socket, head) => {
   if (request.url !== '/ws') {
@@ -87,6 +100,13 @@ wss.on('connection', (webSocket) => {
         const room = rooms.start(webSocket);
         rooms.broadcast(room);
         rooms.broadcastGame(room);
+        scheduleAiTurn(room);
+        return;
+      }
+
+      if (message.type === 'game:sync') {
+        const { state } = rooms.gameFor(webSocket);
+        webSocket.send(JSON.stringify({ type: 'game:started', payload: state }));
         return;
       }
 
