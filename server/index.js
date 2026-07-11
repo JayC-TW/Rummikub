@@ -54,7 +54,10 @@ wss.on('connection', (webSocket) => {
 
       if (message.type === 'room:create') {
         rooms.leave(webSocket);
-        const result = rooms.createRoom(normalizePlayerName(payload.playerName), webSocket);
+        const result = rooms.createRoom(normalizePlayerName(payload.playerName), webSocket, {
+          maxPlayers: payload.maxPlayers,
+          aiLevels: payload.aiLevels,
+        });
         webSocket.send(JSON.stringify({ type: 'room:joined', payload: result }));
         rooms.broadcast(rooms.rooms.get(result.room.code));
         return;
@@ -76,6 +79,12 @@ wss.on('connection', (webSocket) => {
         const room = rooms.leave(webSocket);
         if (room) rooms.broadcast(room);
         webSocket.send(JSON.stringify({ type: 'room:left' }));
+        return;
+      }
+
+      if (message.type === 'game:start') {
+        const room = rooms.start(webSocket);
+        rooms.broadcast(room);
         return;
       }
 

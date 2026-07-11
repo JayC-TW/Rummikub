@@ -32,6 +32,7 @@ function send(type, payload = {}) {
   socket.send(JSON.stringify({ type, payload }));
 }
 
-export const createRoom = (playerName) => send('room:create', { playerName });
+export const createRoom = (playerName, config) => send('room:create', { playerName, ...config });
 export const joinRoom = (roomCode, playerName) => send('room:join', { roomCode, playerName });
 export const leaveRoom = () => send('room:leave');
+export const startMultiplayerGame = () => send('game:start');

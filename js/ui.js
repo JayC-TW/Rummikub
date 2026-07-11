@@ -6,7 +6,7 @@ import * as Game from './game.js';
 import { classifySet, COLOR_NAMES } from './rules.js';
 import { LEVEL_LABEL } from './game.js';
 import { startMusic, toggleMusic } from './music.js';
-import { connectMultiplayer, createRoom, joinRoom, leaveRoom } from './multiplayer.js';
+import { connectMultiplayer, createRoom, joinRoom, leaveRoom, startMultiplayerGame } from './multiplayer.js';
 
 // ---------- 共用小工具 ----------
 
@@ -455,6 +455,7 @@ function setupStartScreen() {
 }
 
 let multiplayerPlayerId = null;
+let multiplayerMaxPlayers = 3;
 
 function setMultiplayerBusy(busy) {
   $('#btn-create-room').disabled = busy;
@@ -497,13 +498,24 @@ function playerName() {
 }
 
 function setupMultiplayerLobby() {
+  $$('#multiplayer-count-group .seg-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      $$('#multiplayer-count-group .seg-btn').forEach((item) => item.classList.remove('active'));
+      button.classList.add('active');
+      multiplayerMaxPlayers = Number(button.dataset.value);
+      renderMultiplayerAiLevels();
+    });
+  });
+  renderMultiplayerAiLevels();
   $('#room-code').addEventListener('input', (event) => {
     event.target.value = event.target.value.toUpperCase().replace(/[^A-Z2-9]/g, '');
   });
   $('#btn-create-room').addEventListener('click', async () => {
     try {
       const name = playerName();
-      if (await ensureMultiplayerConnection()) createRoom(name);
+      const aiLevels = $$('#multiplayer-ai-levels select').map((select) => select.value);
+      while (aiLevels.length < 3) aiLevels.push('intermediate');
+      if (await ensureMultiplayerConnection()) createRoom(name, { maxPlayers: multiplayerMaxPlayers, aiLevels });
     } catch (error) { showToast(error.message); setMultiplayerBusy(false); }
   });
   $('#btn-join-room').addEventListener('click', async () => {
@@ -515,12 +527,25 @@ function setupMultiplayerLobby() {
     } catch (error) { showToast(error.message); setMultiplayerBusy(false); }
   });
   $('#btn-leave-room').addEventListener('click', () => leaveRoom());
+  $('#btn-start-multiplayer').addEventListener('click', () => startMultiplayerGame());
+}
+
+function renderMultiplayerAiLevels() {
+  const container = $('#multiplayer-ai-levels');
+  container.innerHTML = '';
+  for (let seat = 2; seat <= multiplayerMaxPlayers; seat += 1) {
+    const row = document.createElement('div');
+    row.className = 'multiplayer-ai-row';
+    row.innerHTML = `<span>第 ${seat} 席候補</span><select><option value="basic">初級</option><option value="intermediate" selected>中級</option><option value="advanced">高級</option></select>`;
+    container.appendChild(row);
+  }
 }
 
 function renderRoomLobby(room) {
   $('#multiplayer-form').hidden = true;
   $('#room-lobby').hidden = false;
   $('#current-room-code').textContent = room.code;
+  $('#btn-start-multiplayer').hidden = room.started || room.hostId !== multiplayerPlayerId;
   const list = $('#room-player-list');
   list.innerHTML = '';
   for (const player of room.players) {
@@ -529,10 +554,14 @@ function renderRoomLobby(room) {
     const label = document.createElement('span');
     label.textContent = `${player.name}${player.id === multiplayerPlayerId ? '（你）' : ''}`;
     const role = document.createElement('span');
-    role.textContent = player.id === room.hostId ? '房主' : '玩家';
+    const levelLabel = player.isAI ? ` · ${LEVEL_LABEL[player.level]}` : '';
+    role.textContent = `${player.id === room.hostId ? '房主' : (player.isAI ? '電腦' : '玩家')}${levelLabel}`;
     row.append(label, role);
     list.appendChild(row);
   }
+  $('.lobby-hint').textContent = room.started
+    ? '遊戲已開始，房間已鎖定；出牌同步將於下一階段開放。'
+    : `等待房主開始；開始時將以電腦補滿 ${room.maxPlayers} 席。`;
   setMultiplayerBusy(false);
 }
 

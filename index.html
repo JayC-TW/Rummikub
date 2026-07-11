@@ -48,6 +48,18 @@
           <label for="player-name">玩家暱稱</label>
           <input id="player-name" maxlength="12" autocomplete="nickname" placeholder="請輸入暱稱" />
         </div>
+        <div class="field compact-field">
+          <label>最多玩家人數</label>
+          <div class="segmented" id="multiplayer-count-group">
+            <button type="button" class="seg-btn" data-value="2">2 位</button>
+            <button type="button" class="seg-btn active" data-value="3">3 位</button>
+            <button type="button" class="seg-btn" data-value="4">4 位</button>
+          </div>
+        </div>
+        <div class="field compact-field">
+          <label>缺額電腦難度</label>
+          <div id="multiplayer-ai-levels"></div>
+        </div>
         <div class="multiplayer-actions">
           <button id="btn-create-room" class="secondary-btn" type="button">建立房間</button>
           <div class="join-row">
@@ -62,6 +74,7 @@
         <div class="room-heading">房間 <strong id="current-room-code"></strong></div>
         <div id="room-player-list"></div>
         <p class="lobby-hint">房間同步已完成；多人牌局將於下一階段開放。</p>
+        <button id="btn-start-multiplayer" class="primary-btn" type="button">開始遊戲</button>
         <button id="btn-leave-room" class="secondary-btn" type="button">離開房間</button>
       </div>
 

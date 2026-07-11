@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 
 const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const MAX_PLAYERS = 4;
+const AI_LEVELS = new Set(['basic', 'intermediate', 'advanced']);
 
 function createRoomCode() {
   const bytes = randomBytes(4);
@@ -12,7 +13,10 @@ function publicRoom(room) {
   return {
     code: room.code,
     hostId: room.hostId,
-    players: room.players.map(({ id, name }) => ({ id, name })),
+    maxPlayers: room.maxPlayers,
+    aiLevels: room.aiLevels,
+    started: room.started,
+    players: room.players.map(({ id, name, isAI, level }) => ({ id, name, isAI, level })),
   };
 }
 
@@ -22,12 +26,19 @@ export class RoomManager {
     this.memberships = new Map();
   }
 
-  createRoom(name, socket) {
+  createRoom(name, socket, config) {
     let code;
     do code = createRoomCode(); while (this.rooms.has(code));
 
-    const player = { id: randomUUID(), name, socket };
-    const room = { code, hostId: player.id, players: [player] };
+    const player = { id: randomUUID(), name, socket, isAI: false, level: null };
+    const room = {
+      code,
+      hostId: player.id,
+      players: [player],
+      maxPlayers: normalizeMaxPlayers(config?.maxPlayers),
+      aiLevels: normalizeAiLevels(config?.aiLevels),
+      started: false,
+    };
     this.rooms.set(code, room);
     this.memberships.set(socket, { code, playerId: player.id });
     return { room: publicRoom(room), playerId: player.id };
@@ -36,13 +47,37 @@ export class RoomManager {
   joinRoom(code, name, socket) {
     const room = this.rooms.get(code);
     if (!room) throw new Error('找不到房間');
-    if (room.players.length >= MAX_PLAYERS) throw new Error('房間人數已滿');
+    if (room.started) throw new Error('遊戲已開始，無法加入');
+    if (room.players.length >= room.maxPlayers) throw new Error('房間人數已滿');
     if (room.players.some((player) => player.name === name)) throw new Error('房間內已有相同暱稱');
 
-    const player = { id: randomUUID(), name, socket };
+    const player = { id: randomUUID(), name, socket, isAI: false, level: null };
     room.players.push(player);
     this.memberships.set(socket, { code, playerId: player.id });
     return { room: publicRoom(room), playerId: player.id };
+  }
+
+  start(socket) {
+    const membership = this.memberships.get(socket);
+    if (!membership) throw new Error('你尚未加入房間');
+    const room = this.rooms.get(membership.code);
+    if (!room) throw new Error('找不到房間');
+    if (room.hostId !== membership.playerId) throw new Error('只有房主可以開始遊戲');
+    if (room.started) throw new Error('遊戲已經開始');
+
+    while (room.players.length < room.maxPlayers) {
+      const seatIndex = room.players.length;
+      const aiNumber = room.players.filter((player) => player.isAI).length;
+      room.players.push({
+        id: randomUUID(),
+        name: `電腦${String.fromCharCode(65 + aiNumber)}`,
+        socket: null,
+        isAI: true,
+        level: room.aiLevels[seatIndex - 1] ?? 'intermediate',
+      });
+    }
+    room.started = true;
+    return room;
   }
 
   leave(socket) {
@@ -52,7 +87,22 @@ export class RoomManager {
 
     const room = this.rooms.get(membership.code);
     if (!room) return null;
-    room.players = room.players.filter((player) => player.id !== membership.playerId);
+    const playerIndex = room.players.findIndex((player) => player.id === membership.playerId);
+    if (playerIndex === -1) return room;
+
+    if (room.started) {
+      const player = room.players[playerIndex];
+      room.players[playerIndex] = {
+        ...player,
+        name: `${player.name}（電腦接手）`,
+        socket: null,
+        isAI: true,
+        level: player.level ?? 'intermediate',
+      };
+      return room;
+    }
+
+    room.players.splice(playerIndex, 1);
 
     if (room.players.length === 0) {
       this.rooms.delete(room.code);
@@ -66,9 +116,25 @@ export class RoomManager {
   broadcast(room) {
     const message = JSON.stringify({ type: 'room:state', payload: publicRoom(room) });
     for (const player of room.players) {
-      if (player.socket.readyState === 1) player.socket.send(message);
+      if (player.socket?.readyState === 1) player.socket.send(message);
     }
   }
+}
+
+export function normalizeMaxPlayers(value) {
+  const maxPlayers = Number(value);
+  if (!Number.isInteger(maxPlayers) || maxPlayers < 2 || maxPlayers > MAX_PLAYERS) {
+    throw new Error('最多玩家人數需為 2～4 人');
+  }
+  return maxPlayers;
+}
+
+export function normalizeAiLevels(value) {
+  if (!Array.isArray(value) || value.length !== MAX_PLAYERS - 1) {
+    throw new Error('電腦等級設定不完整');
+  }
+  if (value.some((level) => !AI_LEVELS.has(level))) throw new Error('電腦等級不正確');
+  return value.slice();
 }
 
 export function normalizePlayerName(value) {

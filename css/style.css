@@ -104,6 +104,9 @@ html, body {
 .room-heading { text-align: center; margin-bottom: 10px; }
 .room-heading strong { color: var(--accent); letter-spacing: 2px; }
 .room-player { display: flex; justify-content: space-between; padding: 8px 10px; margin-top: 6px; border-radius: 7px; background: rgba(0,0,0,.14); }
+#multiplayer-ai-levels { display: flex; flex-direction: column; gap: 6px; }
+.multiplayer-ai-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+.multiplayer-ai-row select { background: var(--panel); color: var(--text-light); border: 1px solid rgba(255,255,255,.3); border-radius: 6px; padding: 6px; }
 #btn-leave-room { width: 100%; margin-top: 12px; }
 
 /* ===== 遊戲畫面 ===== */
