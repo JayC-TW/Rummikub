@@ -1,4 +1,4 @@
-import { COLORS, MIN_MELD_VALUE, classifySet, createDeck, isValidBoard } from '../js/rules.js';
+import { COLORS, MIN_MELD_VALUE, createDeck, isValidBoard } from '../js/rules.js';
 import { decideAiTurn } from '../js/ai.js';
 
 function sortHand(hand) {
@@ -162,7 +162,10 @@ export function applyHumanPlay(room, playerId, proposedBoard, proposedHand) {
       }
     }
     const newSets = proposedBoard.filter((set) => !originalSets.has(set.id));
-    const meldValue = newSets.reduce((sum, set) => sum + classifySet(set.tiles).meldValue, 0);
+    const meldValue = newSets
+      .flatMap((set) => set.tiles)
+      .filter((tile) => !tile.isJoker)
+      .reduce((sum, tile) => sum + tile.number, 0);
     if (newSets.length === 0 || meldValue < MIN_MELD_VALUE) throw new Error('破冰出牌需達 30 點');
     player.hasMelded = true;
   }
