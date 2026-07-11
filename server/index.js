@@ -23,6 +23,33 @@ const server = http.createServer((request, response) => {
 const wss = new WebSocketServer({ noServer: true });
 const rooms = new RoomManager();
 
+function armTurnClock(room) {
+  if (room.turnTimer) clearTimeout(room.turnTimer);
+  room.turnTimer = null;
+  if (!room.game || room.game.gameOver || room.game.turnSeconds === null) {
+    if (room.game) room.game.turnDeadline = null;
+    return;
+  }
+  room.game.turnDeadline = Date.now() + room.game.turnSeconds * 1000;
+  room.turnTimer = setTimeout(() => {
+    room.turnTimer = null;
+    const player = room.game.players[room.game.currentPlayerIndex];
+    if (!player || room.game.gameOver) return;
+    if (player.isAI) {
+      scheduleAiTurn(room);
+      return;
+    }
+    try {
+      applyHumanDraw(room, player.id);
+      armTurnClock(room);
+      rooms.broadcastGame(room);
+      scheduleAiTurn(room);
+    } catch {
+      // 牌局已在計時器觸發前推進，不再處理此逾時。
+    }
+  }, room.game.turnSeconds * 1000);
+}
+
 function scheduleAiTurn(room) {
   if (room.aiTimer || !room.game || room.game.gameOver) return;
   const prepared = prepareAiTurn(room);
@@ -30,6 +57,7 @@ function scheduleAiTurn(room) {
   room.aiTimer = setTimeout(() => {
     room.aiTimer = null;
     if (!applyPreparedAiTurn(room, prepared)) return;
+    armTurnClock(room);
     rooms.broadcastGame(room);
     scheduleAiTurn(room);
   }, prepared.action.thinkMs);
@@ -107,6 +135,7 @@ wss.on('connection', (webSocket) => {
 
       if (message.type === 'game:start') {
         const room = rooms.start(webSocket);
+        armTurnClock(room);
         rooms.broadcast(room);
         rooms.broadcastGame(room);
         scheduleAiTurn(room);
@@ -122,6 +151,7 @@ wss.on('connection', (webSocket) => {
       if (message.type === 'turn:draw') {
         const { room, playerId } = rooms.gameFor(webSocket);
         applyHumanDraw(room, playerId);
+        armTurnClock(room);
         rooms.broadcastGame(room);
         scheduleAiTurn(room);
         return;
@@ -130,6 +160,7 @@ wss.on('connection', (webSocket) => {
       if (message.type === 'turn:play') {
         const { room, playerId } = rooms.gameFor(webSocket);
         applyHumanPlay(room, playerId, payload.board, payload.hand);
+        armTurnClock(room);
         rooms.broadcastGame(room);
         scheduleAiTurn(room);
         return;

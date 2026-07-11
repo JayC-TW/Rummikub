@@ -58,6 +58,7 @@ export function gameViewFor(room, viewerId) {
     deckCount: game.deck.length,
     currentPlayerIndex: orderedPlayers.findIndex((player) => player.id === currentPlayerId),
     turnSeconds: game.turnSeconds,
+    turnDeadline: game.turnDeadline ?? null,
     round: game.round,
   };
 }

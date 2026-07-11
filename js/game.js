@@ -91,7 +91,9 @@ export function loadRemoteGame(remoteState) {
     deck: Array.from({ length: remoteState.deckCount }),
     currentPlayerIndex: remoteState.currentPlayerIndex,
     turnSeconds: remoteState.turnSeconds === null ? Infinity : remoteState.turnSeconds,
-    timeLeft: remoteState.turnSeconds === null ? Infinity : remoteState.turnSeconds,
+    timeLeft: remoteState.turnSeconds === null
+      ? Infinity
+      : Math.max(0, Math.ceil((remoteState.turnDeadline - Date.now()) / 1000)),
     timerHandle: null,
     turnStartSnapshot: {
       boardIds: new Set(remoteState.board.map((set) => set.id)),
@@ -105,9 +107,23 @@ export function loadRemoteGame(remoteState) {
     round: remoteState.round,
     remote: true,
     roomCode: remoteState.roomCode,
+    turnDeadline: remoteState.turnDeadline,
   };
+  startRemoteTimer();
   listeners.render();
   return state;
+}
+
+function startRemoteTimer() {
+  if (!state.remote || !Number.isFinite(state.turnSeconds) || !state.turnDeadline) return;
+  state.timerHandle = setInterval(() => {
+    if (!state?.remote) return;
+    const next = Math.max(0, Math.ceil((state.turnDeadline - Date.now()) / 1000));
+    if (next === state.timeLeft) return;
+    state.timeLeft = next;
+    listeners.render();
+    if (next === 0) clearTimer();
+  }, 250);
 }
 
 function currentPlayer() {

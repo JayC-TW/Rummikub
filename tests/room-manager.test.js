@@ -51,11 +51,14 @@ test('開始時依人數與等級補滿電腦並鎖房', () => {
   const created = manager.createRoom('Jay', hostSocket, config);
   manager.joinRoom(created.room.code, 'Amy', socket());
   const room = manager.start(hostSocket);
+  room.game.turnDeadline = 123456789;
 
   assert.equal(room.started, true);
   assert.equal(room.players.length, 4);
   assert.equal(room.game.players.every((player) => player.hand.length === 14), true);
   assert.equal(room.game.deck.length, 50);
+  manager.broadcastGame(room);
+  assert.equal(hostSocket.messages.at(-1).payload.turnDeadline, 123456789);
   assert.deepEqual(room.players.slice(2).map((player) => player.level), ['intermediate', 'advanced']);
   assert.throws(() => manager.joinRoom(created.room.code, 'Bob', socket()), /遊戲已開始/);
 });

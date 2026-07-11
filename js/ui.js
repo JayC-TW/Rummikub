@@ -104,9 +104,13 @@ function renderOpponents() {
     const card = document.createElement('div');
     card.className = 'opponent-card' + (cur.id === p.id ? ' active-turn' : '');
     const thinking = cur.id === p.id && Game.state.aiThinking;
+    const humanCountdown = cur.id === p.id && !p.isAI && Number.isFinite(Game.state.timeLeft)
+      ? `<div class="turn-countdown${Game.state.timeLeft <= 10 ? ' low' : ''}">⏱ ${Math.max(0, Game.state.timeLeft)} 秒</div>`
+      : '';
     card.innerHTML = `
       <div class="opp-name">${p.name} ${p.isAI ? `<span class="opp-level">(${LEVEL_LABEL[p.level]})</span>` : ''}</div>
       <div class="opp-count">🀫 手牌 ${p.handCount ?? p.hand.length} 張${p.hasMelded ? ' · 已破冰' : ''}</div>
+      ${humanCountdown}
       ${thinking ? '<div class="thinking"><span class="dot-spin">⏳</span> 思考中…</div>' : ''}
     `;
     bar.appendChild(card);

@@ -134,6 +134,8 @@ html, body {
 .opponent-card .opp-level { opacity: .7; font-size: 11px; }
 .opponent-card .opp-count { margin-top: 4px; opacity: .85; }
 .opponent-card .thinking { color: var(--accent); font-size: 11px; margin-top: 2px; }
+.opponent-card .turn-countdown { color: var(--accent); font-size: 12px; font-weight: 700; margin-top: 4px; }
+.opponent-card .turn-countdown.low { color: var(--danger); }
 .dot-spin { display: inline-block; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
