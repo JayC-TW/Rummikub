@@ -37,11 +37,14 @@ html, body {
   background: var(--panel);
   border-radius: 16px;
   padding: 32px;
-  max-width: 480px;
+  max-width: 1040px;
   width: 100%;
   box-shadow: 0 10px 40px rgba(0,0,0,.4);
 }
 .start-card h1 { margin: 0 0 4px; font-size: 28px; text-align: center; }
+.game-mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
+.game-mode-panel { padding: 20px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(255,255,255,.035); }
+.game-mode-panel h2 { margin: 0 0 18px; color: var(--accent); font-size: 20px; text-align: center; }
 .subtitle { text-align: center; opacity: .75; margin: 0 0 24px; font-size: 14px; }
 .field { margin-bottom: 20px; }
 .field > label { display: block; font-size: 14px; opacity: .85; margin-bottom: 8px; }
@@ -86,8 +89,6 @@ html, body {
 }
 .primary-btn:active { transform: scale(.98); }
 .stats-line { text-align: center; font-size: 12px; opacity: .6; margin-top: 16px; margin-bottom: 0; }
-.mode-divider { display: flex; align-items: center; gap: 10px; margin: 24px 0 16px; font-size: 13px; opacity: .7; }
-.mode-divider::before, .mode-divider::after { content: ''; height: 1px; flex: 1; background: rgba(255,255,255,.2); }
 .compact-field { margin-bottom: 12px; }
 .compact-field input, .join-row input {
   width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25);
@@ -290,6 +291,8 @@ html, body {
 /* ===== RWD ===== */
 @media (max-width: 640px) {
   .start-card { padding: 22px; }
+  #start-screen { justify-content: flex-start; padding: 12px; }
+  .game-mode-grid { grid-template-columns: 1fr; }
   .tile { width: 34px; height: 48px; }
   #action-buttons { width: 100%; justify-content: center; }
   .ctl-btn { flex: 1; padding: 9px 4px; font-size: 12px; }

@@ -15,6 +15,7 @@ function publicRoom(room) {
     hostId: room.hostId,
     maxPlayers: room.maxPlayers,
     aiLevels: room.aiLevels,
+    turnSeconds: room.turnSeconds,
     started: room.started,
     players: room.players.map(({ id, name, isAI, level }) => ({ id, name, isAI, level })),
   };
@@ -37,6 +38,7 @@ export class RoomManager {
       players: [player],
       maxPlayers: normalizeMaxPlayers(config?.maxPlayers),
       aiLevels: normalizeAiLevels(config?.aiLevels),
+      turnSeconds: normalizeTurnSeconds(config?.turnSeconds),
       started: false,
     };
     this.rooms.set(code, room);
@@ -135,6 +137,13 @@ export function normalizeAiLevels(value) {
   }
   if (value.some((level) => !AI_LEVELS.has(level))) throw new Error('電腦等級不正確');
   return value.slice();
+}
+
+export function normalizeTurnSeconds(value) {
+  if (value === null) return null;
+  const seconds = Number(value);
+  if (![30, 60, 120].includes(seconds)) throw new Error('回合限時設定不正確');
+  return seconds;
 }
 
 export function normalizePlayerName(value) {

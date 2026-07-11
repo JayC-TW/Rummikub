@@ -456,6 +456,7 @@ function setupStartScreen() {
 
 let multiplayerPlayerId = null;
 let multiplayerMaxPlayers = 3;
+let multiplayerTurnSeconds = 60;
 
 function setMultiplayerBusy(busy) {
   $('#btn-create-room').disabled = busy;
@@ -506,6 +507,13 @@ function setupMultiplayerLobby() {
       renderMultiplayerAiLevels();
     });
   });
+  $$('#multiplayer-turn-time-group .seg-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      $$('#multiplayer-turn-time-group .seg-btn').forEach((item) => item.classList.remove('active'));
+      button.classList.add('active');
+      multiplayerTurnSeconds = button.dataset.value === 'Infinity' ? null : Number(button.dataset.value);
+    });
+  });
   renderMultiplayerAiLevels();
   $('#room-code').addEventListener('input', (event) => {
     event.target.value = event.target.value.toUpperCase().replace(/[^A-Z2-9]/g, '');
@@ -515,7 +523,11 @@ function setupMultiplayerLobby() {
       const name = playerName();
       const aiLevels = $$('#multiplayer-ai-levels select').map((select) => select.value);
       while (aiLevels.length < 3) aiLevels.push('intermediate');
-      if (await ensureMultiplayerConnection()) createRoom(name, { maxPlayers: multiplayerMaxPlayers, aiLevels });
+      if (await ensureMultiplayerConnection()) createRoom(name, {
+        maxPlayers: multiplayerMaxPlayers,
+        aiLevels,
+        turnSeconds: multiplayerTurnSeconds,
+      });
     } catch (error) { showToast(error.message); setMultiplayerBusy(false); }
   });
   $('#btn-join-room').addEventListener('click', async () => {
@@ -561,7 +573,7 @@ function renderRoomLobby(room) {
   }
   $('.lobby-hint').textContent = room.started
     ? '遊戲已開始，房間已鎖定；出牌同步將於下一階段開放。'
-    : `等待房主開始；開始時將以電腦補滿 ${room.maxPlayers} 席。`;
+    : `等待房主開始；共 ${room.maxPlayers} 席，每回合 ${room.turnSeconds === null ? '無時間限制' : `${room.turnSeconds} 秒`}。`;
   setMultiplayerBusy(false);
 }
 

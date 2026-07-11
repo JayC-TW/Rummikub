@@ -14,7 +14,11 @@
   <section id="start-screen" class="screen">
     <div class="start-card">
       <h1>拉密 Rummikub</h1>
-      <p class="subtitle">與電腦 AI 對戰的線上拉密桌遊</p>
+      <p class="subtitle">選擇單人或多人連線對戰</p>
+
+      <div class="game-mode-grid">
+      <section class="game-mode-panel">
+      <h2>單人對戰</h2>
 
       <div class="field">
         <label>電腦對手人數</label>
@@ -42,7 +46,10 @@
 
       <button id="btn-start-game" class="primary-btn">開始遊戲</button>
 
-      <div class="mode-divider"><span>多人連線測試</span></div>
+      </section>
+
+      <section class="game-mode-panel">
+      <h2>多人對戰</h2>
       <div id="multiplayer-form">
         <div class="field compact-field">
           <label for="player-name">玩家暱稱</label>
@@ -60,6 +67,15 @@
           <label>缺額電腦難度</label>
           <div id="multiplayer-ai-levels"></div>
         </div>
+        <div class="field compact-field">
+          <label>回合限時</label>
+          <div class="segmented" id="multiplayer-turn-time-group">
+            <button type="button" class="seg-btn" data-value="30">30 秒</button>
+            <button type="button" class="seg-btn active" data-value="60">60 秒</button>
+            <button type="button" class="seg-btn" data-value="120">120 秒</button>
+            <button type="button" class="seg-btn" data-value="Infinity">無限制</button>
+          </div>
+        </div>
         <div class="multiplayer-actions">
           <button id="btn-create-room" class="secondary-btn" type="button">建立房間</button>
           <div class="join-row">
@@ -76,6 +92,9 @@
         <p class="lobby-hint">房間同步已完成；多人牌局將於下一階段開放。</p>
         <button id="btn-start-multiplayer" class="primary-btn" type="button">開始遊戲</button>
         <button id="btn-leave-room" class="secondary-btn" type="button">離開房間</button>
+      </div>
+
+      </section>
       </div>
 
       <p class="stats-line" id="stats-line"></p>

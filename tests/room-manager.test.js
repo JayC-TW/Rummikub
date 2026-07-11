@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { RoomManager, normalizePlayerName, normalizeRoomCode } from '../server/room-manager.js';
 
-const config = { maxPlayers: 4, aiLevels: ['basic', 'intermediate', 'advanced'] };
+const config = { maxPlayers: 4, aiLevels: ['basic', 'intermediate', 'advanced'], turnSeconds: 60 };
 
 function socket() {
   return { readyState: 1, messages: [], send(message) { this.messages.push(JSON.parse(message)); } };
@@ -16,6 +16,7 @@ test('建立、加入與廣播房間狀態', () => {
   const joined = manager.joinRoom(created.room.code, 'Amy', guestSocket);
 
   assert.equal(joined.room.players.length, 2);
+  assert.equal(joined.room.turnSeconds, 60);
   manager.broadcast(manager.rooms.get(created.room.code));
   assert.equal(hostSocket.messages.at(-1).payload.players.length, 2);
   assert.equal(guestSocket.messages.at(-1).payload.players.length, 2);

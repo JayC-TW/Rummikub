@@ -57,6 +57,7 @@ wss.on('connection', (webSocket) => {
         const result = rooms.createRoom(normalizePlayerName(payload.playerName), webSocket, {
           maxPlayers: payload.maxPlayers,
           aiLevels: payload.aiLevels,
+          turnSeconds: payload.turnSeconds,
         });
         webSocket.send(JSON.stringify({ type: 'room:joined', payload: result }));
         rooms.broadcast(rooms.rooms.get(result.room.code));
