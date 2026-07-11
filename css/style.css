@@ -86,6 +86,25 @@ html, body {
 }
 .primary-btn:active { transform: scale(.98); }
 .stats-line { text-align: center; font-size: 12px; opacity: .6; margin-top: 16px; margin-bottom: 0; }
+.mode-divider { display: flex; align-items: center; gap: 10px; margin: 24px 0 16px; font-size: 13px; opacity: .7; }
+.mode-divider::before, .mode-divider::after { content: ''; height: 1px; flex: 1; background: rgba(255,255,255,.2); }
+.compact-field { margin-bottom: 12px; }
+.compact-field input, .join-row input {
+  width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25);
+  background: rgba(0,0,0,.15); color: var(--text-light); font-size: 15px;
+}
+.multiplayer-actions { display: flex; gap: 8px; }
+.multiplayer-actions > * { flex: 1; }
+.join-row { display: flex; gap: 6px; }
+.join-row input { min-width: 0; text-transform: uppercase; }
+.secondary-btn { padding: 11px 12px; border-radius: 8px; border: 1px solid var(--accent); background: transparent; color: var(--accent); cursor: pointer; font-weight: 700; }
+.secondary-btn:disabled { opacity: .45; cursor: wait; }
+.connection-status, .lobby-hint { margin: 10px 0 0; font-size: 12px; opacity: .7; text-align: center; }
+#room-lobby { padding: 14px; border-radius: 10px; background: rgba(255,255,255,.06); }
+.room-heading { text-align: center; margin-bottom: 10px; }
+.room-heading strong { color: var(--accent); letter-spacing: 2px; }
+.room-player { display: flex; justify-content: space-between; padding: 8px 10px; margin-top: 6px; border-radius: 7px; background: rgba(0,0,0,.14); }
+#btn-leave-room { width: 100%; margin-top: 12px; }
 
 /* ===== 遊戲畫面 ===== */
 #opponents-bar {

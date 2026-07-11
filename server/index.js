@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { WebSocketServer } from 'ws';
+import { RoomManager, normalizePlayerName, normalizeRoomCode } from './room-manager.js';
 
 const allowedOrigins = new Set([
   'http://localhost:8000',
@@ -19,6 +20,7 @@ const server = http.createServer((request, response) => {
 });
 
 const wss = new WebSocketServer({ noServer: true });
+const rooms = new RoomManager();
 
 server.on('upgrade', (request, socket, head) => {
   if (request.url !== '/ws') {
@@ -45,10 +47,50 @@ wss.on('connection', (webSocket) => {
   }));
 
   webSocket.on('message', (data) => {
-    webSocket.send(JSON.stringify({
-      type: 'echo',
-      data: data.toString(),
-    }));
+    let message;
+    try {
+      message = JSON.parse(data.toString());
+      const payload = message.payload ?? {};
+
+      if (message.type === 'room:create') {
+        rooms.leave(webSocket);
+        const result = rooms.createRoom(normalizePlayerName(payload.playerName), webSocket);
+        webSocket.send(JSON.stringify({ type: 'room:joined', payload: result }));
+        rooms.broadcast(rooms.rooms.get(result.room.code));
+        return;
+      }
+
+      if (message.type === 'room:join') {
+        rooms.leave(webSocket);
+        const result = rooms.joinRoom(
+          normalizeRoomCode(payload.roomCode),
+          normalizePlayerName(payload.playerName),
+          webSocket,
+        );
+        webSocket.send(JSON.stringify({ type: 'room:joined', payload: result }));
+        rooms.broadcast(rooms.rooms.get(result.room.code));
+        return;
+      }
+
+      if (message.type === 'room:leave') {
+        const room = rooms.leave(webSocket);
+        if (room) rooms.broadcast(room);
+        webSocket.send(JSON.stringify({ type: 'room:left' }));
+        return;
+      }
+
+      throw new Error('不支援的操作');
+    } catch (error) {
+      webSocket.send(JSON.stringify({
+        type: 'action:rejected',
+        payload: { message: error instanceof Error ? error.message : '訊息格式錯誤' },
+      }));
+    }
+  });
+
+  webSocket.on('close', () => {
+    const room = rooms.leave(webSocket);
+    if (room) rooms.broadcast(room);
   });
 });
 

@@ -42,6 +42,29 @@
 
       <button id="btn-start-game" class="primary-btn">開始遊戲</button>
 
+      <div class="mode-divider"><span>多人連線測試</span></div>
+      <div id="multiplayer-form">
+        <div class="field compact-field">
+          <label for="player-name">玩家暱稱</label>
+          <input id="player-name" maxlength="12" autocomplete="nickname" placeholder="請輸入暱稱" />
+        </div>
+        <div class="multiplayer-actions">
+          <button id="btn-create-room" class="secondary-btn" type="button">建立房間</button>
+          <div class="join-row">
+            <input id="room-code" maxlength="4" autocomplete="off" placeholder="房號" />
+            <button id="btn-join-room" class="secondary-btn" type="button">加入</button>
+          </div>
+        </div>
+        <p id="multiplayer-status" class="connection-status">尚未連線</p>
+      </div>
+
+      <div id="room-lobby" hidden>
+        <div class="room-heading">房間 <strong id="current-room-code"></strong></div>
+        <div id="room-player-list"></div>
+        <p class="lobby-hint">房間同步已完成；多人牌局將於下一階段開放。</p>
+        <button id="btn-leave-room" class="secondary-btn" type="button">離開房間</button>
+      </div>
+
       <p class="stats-line" id="stats-line"></p>
     </div>
   </section>

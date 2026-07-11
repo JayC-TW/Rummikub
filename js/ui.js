@@ -6,6 +6,7 @@ import * as Game from './game.js';
 import { classifySet, COLOR_NAMES } from './rules.js';
 import { LEVEL_LABEL } from './game.js';
 import { startMusic, toggleMusic } from './music.js';
+import { connectMultiplayer, createRoom, joinRoom, leaveRoom } from './multiplayer.js';
 
 // ---------- 共用小工具 ----------
 
@@ -450,6 +451,97 @@ function setupStartScreen() {
   });
 
   updateStatsLine();
+  setupMultiplayerLobby();
+}
+
+let multiplayerPlayerId = null;
+
+function setMultiplayerBusy(busy) {
+  $('#btn-create-room').disabled = busy;
+  $('#btn-join-room').disabled = busy;
+}
+
+async function ensureMultiplayerConnection() {
+  setMultiplayerBusy(true);
+  $('#multiplayer-status').textContent = '連線中…';
+  try {
+    await connectMultiplayer({
+      onStatus: (status) => {
+        $('#multiplayer-status').textContent = status === 'connected' ? '多人伺服器已連線' : '連線已中斷，請重新操作';
+        if (status === 'disconnected') setMultiplayerBusy(false);
+      },
+      onJoined: ({ playerId, room }) => {
+        multiplayerPlayerId = playerId;
+        renderRoomLobby(room);
+      },
+      onRoomState: (room) => renderRoomLobby(room),
+      onLeft: () => showMultiplayerForm(),
+      onError: (message) => {
+        showToast(message);
+        setMultiplayerBusy(false);
+      },
+    });
+    return true;
+  } catch (error) {
+    showToast(error.message);
+    $('#multiplayer-status').textContent = '多人伺服器連線失敗';
+    setMultiplayerBusy(false);
+    return false;
+  }
+}
+
+function playerName() {
+  const name = $('#player-name').value.trim();
+  if (!name) throw new Error('請輸入玩家暱稱');
+  return name;
+}
+
+function setupMultiplayerLobby() {
+  $('#room-code').addEventListener('input', (event) => {
+    event.target.value = event.target.value.toUpperCase().replace(/[^A-Z2-9]/g, '');
+  });
+  $('#btn-create-room').addEventListener('click', async () => {
+    try {
+      const name = playerName();
+      if (await ensureMultiplayerConnection()) createRoom(name);
+    } catch (error) { showToast(error.message); setMultiplayerBusy(false); }
+  });
+  $('#btn-join-room').addEventListener('click', async () => {
+    try {
+      const name = playerName();
+      const code = $('#room-code').value.trim();
+      if (!code) throw new Error('請輸入房號');
+      if (await ensureMultiplayerConnection()) joinRoom(code, name);
+    } catch (error) { showToast(error.message); setMultiplayerBusy(false); }
+  });
+  $('#btn-leave-room').addEventListener('click', () => leaveRoom());
+}
+
+function renderRoomLobby(room) {
+  $('#multiplayer-form').hidden = true;
+  $('#room-lobby').hidden = false;
+  $('#current-room-code').textContent = room.code;
+  const list = $('#room-player-list');
+  list.innerHTML = '';
+  for (const player of room.players) {
+    const row = document.createElement('div');
+    row.className = 'room-player';
+    const label = document.createElement('span');
+    label.textContent = `${player.name}${player.id === multiplayerPlayerId ? '（你）' : ''}`;
+    const role = document.createElement('span');
+    role.textContent = player.id === room.hostId ? '房主' : '玩家';
+    row.append(label, role);
+    list.appendChild(row);
+  }
+  setMultiplayerBusy(false);
+}
+
+function showMultiplayerForm() {
+  multiplayerPlayerId = null;
+  $('#multiplayer-form').hidden = false;
+  $('#room-lobby').hidden = true;
+  $('#multiplayer-status').textContent = '多人伺服器已連線';
+  setMultiplayerBusy(false);
 }
 
 function updateStatsLine() {
