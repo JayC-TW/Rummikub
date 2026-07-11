@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { WebSocketServer } from 'ws';
 import { RoomManager, normalizePlayerName, normalizeRoomCode } from './room-manager.js';
-import { applyPreparedAiTurn, prepareAiTurn } from './game-session.js';
+import { applyHumanDraw, applyHumanPlay, applyPreparedAiTurn, prepareAiTurn } from './game-session.js';
 
 const allowedOrigins = new Set([
   'http://localhost:8000',
@@ -116,6 +116,22 @@ wss.on('connection', (webSocket) => {
       if (message.type === 'game:sync') {
         const { state } = rooms.gameFor(webSocket);
         webSocket.send(JSON.stringify({ type: 'game:started', payload: state }));
+        return;
+      }
+
+      if (message.type === 'turn:draw') {
+        const { room, playerId } = rooms.gameFor(webSocket);
+        applyHumanDraw(room, playerId);
+        rooms.broadcastGame(room);
+        scheduleAiTurn(room);
+        return;
+      }
+
+      if (message.type === 'turn:play') {
+        const { room, playerId } = rooms.gameFor(webSocket);
+        applyHumanPlay(room, playerId, payload.board, payload.hand);
+        rooms.broadcastGame(room);
+        scheduleAiTurn(room);
         return;
       }
 

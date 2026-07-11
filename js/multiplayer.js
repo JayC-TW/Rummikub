@@ -16,7 +16,10 @@ export function connectMultiplayer(nextHandlers = {}) {
       resolve();
     }, { once: true });
     socket.addEventListener('error', () => reject(new Error('無法連線多人伺服器')), { once: true });
-    socket.addEventListener('close', () => handlers.onStatus?.('disconnected'));
+    socket.addEventListener('close', () => {
+      socket = null;
+      handlers.onStatus?.('disconnected');
+    });
     socket.addEventListener('message', ({ data }) => {
       const message = JSON.parse(data);
       if (message.type === 'room:joined') handlers.onJoined?.(message.payload);
@@ -38,3 +41,10 @@ export const joinRoom = (roomCode, playerName) => send('room:join', { roomCode, 
 export const leaveRoom = () => send('room:leave');
 export const startMultiplayerGame = () => send('game:start');
 export const syncMultiplayerGame = () => send('game:sync');
+export const drawMultiplayerTile = () => send('turn:draw');
+export const playMultiplayerTurn = (board, hand) => send('turn:play', { board, hand });
+export function disconnectMultiplayer() {
+  if (!socket) return;
+  socket.close(1000, 'player left');
+  socket = null;
+}

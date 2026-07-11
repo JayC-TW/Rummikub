@@ -6,7 +6,7 @@ import * as Game from './game.js';
 import { classifySet, COLOR_NAMES } from './rules.js';
 import { LEVEL_LABEL } from './game.js';
 import { startMusic, toggleMusic } from './music.js';
-import { connectMultiplayer, createRoom, joinRoom, leaveRoom, startMultiplayerGame, syncMultiplayerGame } from './multiplayer.js';
+import { connectMultiplayer, createRoom, disconnectMultiplayer, drawMultiplayerTile, joinRoom, playMultiplayerTurn, startMultiplayerGame, syncMultiplayerGame } from './multiplayer.js';
 
 // ---------- 共用小工具 ----------
 
@@ -75,7 +75,7 @@ function makeTileEl(tile, { zone, setId, locked }) {
 // ---------- 主渲染 ----------
 
 function isHumanTurn() {
-  return Game.state && !Game.state.remote && !Game.state.gameOver && Game.getCurrentPlayer().id === 0;
+  return Game.state && !Game.state.gameOver && Game.getCurrentPlayer().id === 0;
 }
 
 function render() {
@@ -375,7 +375,7 @@ function setupButtons() {
     const question = isRemote ? '確定要離開多人牌局嗎？離開後將由電腦接手。' : '確定要重新開始嗎？目前對局將直接結束。';
     if (!window.confirm(question)) return;
     if (isRemote) {
-      try { leaveRoom(); } catch (error) { showToast(error.message); }
+      disconnectMultiplayer();
     }
     Game.abortGame();
     endDragCleanup();
@@ -394,11 +394,13 @@ function setupButtons() {
   $('#btn-undo').addEventListener('click', () => Game.undoTurn());
   $('#btn-draw').addEventListener('click', () => {
     clearSelection();
-    Game.drawTile();
+    if (Game.state?.remote) drawMultiplayerTile();
+    else Game.drawTile();
   });
   $('#btn-end').addEventListener('click', () => {
     clearSelection();
-    Game.endTurnWithPlay();
+    if (Game.state?.remote) playMultiplayerTurn(Game.state.draftBoard, Game.state.draftHand);
+    else Game.endTurnWithPlay();
   });
 }
 
@@ -560,10 +562,8 @@ function setupMultiplayerLobby() {
     } catch (error) { showToast(error.message); setMultiplayerBusy(false); }
   });
   $('#btn-leave-room').addEventListener('click', () => {
-    try { leaveRoom(); } catch (error) {
-      showToast(error.message);
-      showMultiplayerForm();
-    }
+    disconnectMultiplayer();
+    showMultiplayerForm();
   });
   $('#btn-start-multiplayer').addEventListener('click', () => startMultiplayerGame());
 }

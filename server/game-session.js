@@ -1,4 +1,4 @@
-import { COLORS, createDeck } from '../js/rules.js';
+import { COLORS, MIN_MELD_VALUE, classifySet, createDeck, isValidBoard } from '../js/rules.js';
 import { decideAiTurn } from '../js/ai.js';
 
 function sortHand(hand) {
@@ -111,4 +111,67 @@ export function applyPreparedAiTurn(room, prepared) {
   game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
   game.round += 1;
   return true;
+}
+
+function currentHuman(room, playerId) {
+  const game = room.game;
+  const player = game.players[game.currentPlayerIndex];
+  if (!player || player.id !== playerId) throw new Error('目前不是你的回合');
+  if (player.isAI) throw new Error('此座位已由電腦接手');
+  if (game.gameOver) throw new Error('遊戲已結束');
+  return player;
+}
+
+function advanceHumanTurn(game) {
+  game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
+  game.round += 1;
+}
+
+export function applyHumanDraw(room, playerId) {
+  const player = currentHuman(room, playerId);
+  const tile = room.game.deck.pop();
+  if (tile) player.hand.push(tile);
+  sortHand(player.hand);
+  advanceHumanTurn(room.game);
+}
+
+export function applyHumanPlay(room, playerId, proposedBoard, proposedHand) {
+  const player = currentHuman(room, playerId);
+  if (!Array.isArray(proposedBoard) || !Array.isArray(proposedHand)) throw new Error('出牌資料格式錯誤');
+  if (!isValidBoard(proposedBoard.map((set) => set.tiles))) throw new Error('桌面上有不合法的牌組');
+
+  const originalBoardTiles = room.game.board.flatMap((set) => set.tiles);
+  const originalIds = [...originalBoardTiles, ...player.hand].map((tile) => tile.uid).sort();
+  const proposedBoardTiles = proposedBoard.flatMap((set) => set.tiles ?? []);
+  const proposedIds = [...proposedBoardTiles, ...proposedHand].map((tile) => tile.uid).sort();
+  if (originalIds.length !== proposedIds.length || originalIds.some((uid, index) => uid !== proposedIds[index])) {
+    throw new Error('牌張資料不完整或包含無效牌張');
+  }
+
+  const originalBoardIds = new Set(originalBoardTiles.map((tile) => tile.uid));
+  const nextBoardIds = new Set(proposedBoardTiles.map((tile) => tile.uid));
+  if ([...originalBoardIds].some((uid) => !nextBoardIds.has(uid))) throw new Error('桌面上的牌不能收回手中');
+  if (proposedHand.length >= player.hand.length) throw new Error('本回合尚未出牌');
+
+  if (!player.hasMelded) {
+    const originalSets = new Map(room.game.board.map((set) => [set.id, set.tiles.map((tile) => tile.uid).sort().join(',')]));
+    for (const set of proposedBoard) {
+      if (originalSets.has(set.id) && set.tiles.map((tile) => tile.uid).sort().join(',') !== originalSets.get(set.id)) {
+        throw new Error('尚未破冰，不能調整桌面既有牌組');
+      }
+    }
+    const newSets = proposedBoard.filter((set) => !originalSets.has(set.id));
+    const meldValue = newSets.reduce((sum, set) => sum + classifySet(set.tiles).meldValue, 0);
+    if (newSets.length === 0 || meldValue < MIN_MELD_VALUE) throw new Error('破冰出牌需達 30 點');
+    player.hasMelded = true;
+  }
+
+  room.game.board = proposedBoard.map((set) => ({ id: String(set.id), tiles: set.tiles.map((tile) => ({ ...tile })) }));
+  player.hand = sortHand(proposedHand.map((tile) => ({ ...tile })));
+  if (player.hand.length === 0) {
+    room.game.gameOver = true;
+    room.game.winnerId = player.id;
+    return;
+  }
+  advanceHumanTurn(room.game);
 }

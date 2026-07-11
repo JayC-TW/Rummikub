@@ -144,7 +144,7 @@ export class RoomManager {
     if (!membership) throw new Error('你尚未加入房間');
     const room = this.rooms.get(membership.code);
     if (!room?.started || !room.game) throw new Error('遊戲尚未開始');
-    return { room, state: gameViewFor(room, membership.playerId) };
+    return { room, playerId: membership.playerId, state: gameViewFor(room, membership.playerId) };
   }
 }
 
