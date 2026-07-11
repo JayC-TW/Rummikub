@@ -129,7 +129,7 @@ function snapshotTurnStart() {
 }
 
 function clearTimer() {
-  if (state.timerHandle) {
+  if (state?.timerHandle) {
     clearInterval(state.timerHandle);
     state.timerHandle = null;
   }
