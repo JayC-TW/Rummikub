@@ -74,6 +74,41 @@ export function createGame(config) {
   return state;
 }
 
+export function loadRemoteGame(remoteState) {
+  clearTimer();
+  const players = remoteState.players.map((player) => ({
+    ...player,
+    hand: player.hand.length > 0
+      ? cloneTiles(player.hand)
+      : Array.from({ length: player.handCount }, (_, index) => ({ uid: `hidden-${player.id}-${index}`, hidden: true })),
+  }));
+  state = {
+    players,
+    board: cloneSets(remoteState.board),
+    draftBoard: cloneSets(remoteState.board),
+    draftHand: cloneTiles(players[0].hand),
+    deck: Array.from({ length: remoteState.deckCount }),
+    currentPlayerIndex: remoteState.currentPlayerIndex,
+    turnSeconds: remoteState.turnSeconds === null ? Infinity : remoteState.turnSeconds,
+    timeLeft: remoteState.turnSeconds === null ? Infinity : remoteState.turnSeconds,
+    timerHandle: null,
+    turnStartSnapshot: {
+      boardIds: new Set(remoteState.board.map((set) => set.id)),
+      handUids: new Set(players[0].hand.map((tile) => tile.uid)),
+      boardUids: new Set(remoteState.board.flatMap((set) => set.tiles.map((tile) => tile.uid))),
+      handLength: players[0].hand.length,
+    },
+    consecutivePasses: 0,
+    gameOver: false,
+    winnerId: null,
+    round: remoteState.round,
+    remote: true,
+    roomCode: remoteState.roomCode,
+  };
+  listeners.render();
+  return state;
+}
+
 function currentPlayer() {
   return state.players[state.currentPlayerIndex];
 }

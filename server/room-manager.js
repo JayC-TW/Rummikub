@@ -1,4 +1,5 @@
 import { randomBytes, randomUUID } from 'node:crypto';
+import { createGameSession, gameViewFor } from './game-session.js';
 
 const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const MAX_PLAYERS = 4;
@@ -79,6 +80,7 @@ export class RoomManager {
       });
     }
     room.started = true;
+    room.game = createGameSession(room);
     return room;
   }
 
@@ -119,6 +121,14 @@ export class RoomManager {
     const message = JSON.stringify({ type: 'room:state', payload: publicRoom(room) });
     for (const player of room.players) {
       if (player.socket?.readyState === 1) player.socket.send(message);
+    }
+  }
+
+  broadcastGame(room) {
+    for (const player of room.players) {
+      if (player.socket?.readyState !== 1) continue;
+      const state = gameViewFor(room, player.id);
+      player.socket.send(JSON.stringify({ type: 'game:started', payload: state }));
     }
   }
 }

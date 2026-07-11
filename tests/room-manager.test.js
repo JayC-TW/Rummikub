@@ -54,8 +54,27 @@ test('開始時依人數與等級補滿電腦並鎖房', () => {
 
   assert.equal(room.started, true);
   assert.equal(room.players.length, 4);
+  assert.equal(room.game.players.every((player) => player.hand.length === 14), true);
+  assert.equal(room.game.deck.length, 50);
   assert.deepEqual(room.players.slice(2).map((player) => player.level), ['intermediate', 'advanced']);
   assert.throws(() => manager.joinRoom(created.room.code, 'Bob', socket()), /遊戲已開始/);
+});
+
+test('開局狀態只向玩家公開自己的手牌', () => {
+  const manager = new RoomManager();
+  const hostSocket = socket();
+  const guestSocket = socket();
+  const created = manager.createRoom('Jay', hostSocket, config);
+  manager.joinRoom(created.room.code, 'Amy', guestSocket);
+  const room = manager.start(hostSocket);
+  manager.broadcastGame(room);
+
+  const hostView = hostSocket.messages.at(-1).payload;
+  const guestView = guestSocket.messages.at(-1).payload;
+  assert.equal(hostView.players[0].hand.length, 14);
+  assert.equal(hostView.players.slice(1).every((player) => player.hand.length === 0), true);
+  assert.equal(guestView.players[0].hand.length, 14);
+  assert.notDeepEqual(hostView.players[0].hand, guestView.players[0].hand);
 });
 
 test('遊戲開始後斷線玩家由中級電腦原座位接手', () => {

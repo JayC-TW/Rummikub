@@ -21,6 +21,7 @@ export function connectMultiplayer(nextHandlers = {}) {
       const message = JSON.parse(data);
       if (message.type === 'room:joined') handlers.onJoined?.(message.payload);
       if (message.type === 'room:state') handlers.onRoomState?.(message.payload);
+      if (message.type === 'game:started') handlers.onGameStarted?.(message.payload);
       if (message.type === 'room:left') handlers.onLeft?.();
       if (message.type === 'action:rejected') handlers.onError?.(message.payload.message);
     });

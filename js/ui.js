@@ -75,7 +75,7 @@ function makeTileEl(tile, { zone, setId, locked }) {
 // ---------- 主渲染 ----------
 
 function isHumanTurn() {
-  return Game.state && !Game.state.gameOver && Game.getCurrentPlayer().id === 0;
+  return Game.state && !Game.state.remote && !Game.state.gameOver && Game.getCurrentPlayer().id === 0;
 }
 
 function render() {
@@ -105,8 +105,8 @@ function renderOpponents() {
     card.className = 'opponent-card' + (cur.id === p.id ? ' active-turn' : '');
     const thinking = cur.id === p.id && Game.state.aiThinking;
     card.innerHTML = `
-      <div class="opp-name">${p.name} <span class="opp-level">(${LEVEL_LABEL[p.level]})</span></div>
-      <div class="opp-count">🀫 手牌 ${p.hand.length} 張${p.hasMelded ? ' · 已破冰' : ''}</div>
+      <div class="opp-name">${p.name} ${p.isAI ? `<span class="opp-level">(${LEVEL_LABEL[p.level]})</span>` : ''}</div>
+      <div class="opp-count">🀫 手牌 ${p.handCount ?? p.hand.length} 張${p.hasMelded ? ' · 已破冰' : ''}</div>
       ${thinking ? '<div class="thinking"><span class="dot-spin">⏳</span> 思考中…</div>' : ''}
     `;
     bar.appendChild(card);
@@ -372,12 +372,14 @@ function setupAreaLevelDrop() {
 function setupButtons() {
   $('#btn-restart').addEventListener('click', () => {
     if (!window.confirm('確定要重新開始嗎？目前對局將直接結束。')) return;
+    if (Game.state?.remote) leaveRoom();
     Game.abortGame();
     endDragCleanup();
     clearSelection();
     $('#game-screen').hidden = true;
     $('#end-screen').hidden = true;
     $('#start-screen').hidden = false;
+    $('#btn-restart').textContent = '重新開始';
     updateStatsLine();
   });
   $('#btn-music').addEventListener('click', () => {
@@ -477,6 +479,7 @@ async function ensureMultiplayerConnection() {
         renderRoomLobby(room);
       },
       onRoomState: (room) => renderRoomLobby(room),
+      onGameStarted: (gameState) => showMultiplayerGame(gameState),
       onLeft: () => showMultiplayerForm(),
       onError: (message) => {
         showToast(message);
@@ -490,6 +493,17 @@ async function ensureMultiplayerConnection() {
     setMultiplayerBusy(false);
     return false;
   }
+}
+
+function showMultiplayerGame(gameState) {
+  Game.loadRemoteGame(gameState);
+  clearSelection();
+  $('#start-screen').hidden = true;
+  $('#end-screen').hidden = true;
+  $('#game-screen').hidden = false;
+  $('#btn-restart').textContent = '離開多人牌局';
+  showToast('多人牌局已開始');
+  render();
 }
 
 function playerName() {

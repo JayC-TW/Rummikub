@@ -86,6 +86,7 @@ wss.on('connection', (webSocket) => {
       if (message.type === 'game:start') {
         const room = rooms.start(webSocket);
         rooms.broadcast(room);
+        rooms.broadcastGame(room);
         return;
       }
 
