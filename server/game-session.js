@@ -1,5 +1,14 @@
-import { createDeck } from '../js/rules.js';
+import { COLORS, createDeck } from '../js/rules.js';
 import { decideAiTurn } from '../js/ai.js';
+
+function sortHand(hand) {
+  hand.sort((a, b) => {
+    if (a.isJoker !== b.isJoker) return a.isJoker ? 1 : -1;
+    if (a.isJoker) return 0;
+    return COLORS.indexOf(a.color) - COLORS.indexOf(b.color) || a.number - b.number;
+  });
+  return hand;
+}
 
 export function createGameSession(room) {
   const deck = createDeck();
@@ -9,7 +18,7 @@ export function createGameSession(room) {
     isAI: player.isAI,
     level: player.level,
     hasMelded: false,
-    hand: deck.splice(0, 14),
+    hand: sortHand(deck.splice(0, 14)),
   }));
 
   return {
@@ -92,6 +101,7 @@ export function applyPreparedAiTurn(room, prepared) {
     player.hand = player.hand.filter((tile) => !usedUids.has(tile.uid));
     if (action.type === 'meld') player.hasMelded = true;
   }
+  sortHand(player.hand);
 
   if (player.hand.length === 0) {
     game.gameOver = true;

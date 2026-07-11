@@ -96,13 +96,20 @@ export class RoomManager {
 
     if (room.started) {
       const player = room.players[playerIndex];
-      room.players[playerIndex] = {
+      const replacement = {
         ...player,
         name: `${player.name}（電腦接手）`,
         socket: null,
         isAI: true,
         level: player.level ?? 'intermediate',
       };
+      room.players[playerIndex] = replacement;
+      const gamePlayer = room.game?.players.find((candidate) => candidate.id === player.id);
+      if (gamePlayer) {
+        gamePlayer.name = replacement.name;
+        gamePlayer.isAI = true;
+        gamePlayer.level = replacement.level;
+      }
       return room;
     }
 

@@ -11,6 +11,9 @@ test('多人牌局輪到電腦時會執行動作並推進回合', () => {
     ],
   };
   room.game = createGameSession(room);
+  const sorted = room.game.players[0].hand;
+  const jokerIndex = sorted.findIndex((tile) => tile.isJoker);
+  assert.equal(jokerIndex === -1 || sorted.slice(jokerIndex).every((tile) => tile.isJoker), true);
   room.game.currentPlayerIndex = 1;
   const beforeTotal = room.game.deck.length + room.game.players[1].hand.length;
   const prepared = prepareAiTurn(room);

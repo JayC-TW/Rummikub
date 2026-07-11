@@ -371,8 +371,12 @@ function setupAreaLevelDrop() {
 
 function setupButtons() {
   $('#btn-restart').addEventListener('click', () => {
-    if (!window.confirm('確定要重新開始嗎？目前對局將直接結束。')) return;
-    if (Game.state?.remote) leaveRoom();
+    const isRemote = Game.state?.remote;
+    const question = isRemote ? '確定要離開多人牌局嗎？離開後將由電腦接手。' : '確定要重新開始嗎？目前對局將直接結束。';
+    if (!window.confirm(question)) return;
+    if (isRemote) {
+      try { leaveRoom(); } catch (error) { showToast(error.message); }
+    }
     Game.abortGame();
     endDragCleanup();
     clearSelection();
@@ -555,7 +559,12 @@ function setupMultiplayerLobby() {
       if (await ensureMultiplayerConnection()) joinRoom(code, name);
     } catch (error) { showToast(error.message); setMultiplayerBusy(false); }
   });
-  $('#btn-leave-room').addEventListener('click', () => leaveRoom());
+  $('#btn-leave-room').addEventListener('click', () => {
+    try { leaveRoom(); } catch (error) {
+      showToast(error.message);
+      showMultiplayerForm();
+    }
+  });
   $('#btn-start-multiplayer').addEventListener('click', () => startMultiplayerGame());
 }
 

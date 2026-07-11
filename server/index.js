@@ -35,6 +35,15 @@ function scheduleAiTurn(room) {
   }, prepared.action.thinkMs);
 }
 
+function broadcastDeparture(room) {
+  if (!room) return;
+  rooms.broadcast(room);
+  if (room.started && room.game) {
+    rooms.broadcastGame(room);
+    scheduleAiTurn(room);
+  }
+}
+
 server.on('upgrade', (request, socket, head) => {
   if (request.url !== '/ws') {
     socket.destroy();
@@ -91,7 +100,7 @@ wss.on('connection', (webSocket) => {
 
       if (message.type === 'room:leave') {
         const room = rooms.leave(webSocket);
-        if (room) rooms.broadcast(room);
+        broadcastDeparture(room);
         webSocket.send(JSON.stringify({ type: 'room:left' }));
         return;
       }
@@ -121,7 +130,7 @@ wss.on('connection', (webSocket) => {
 
   webSocket.on('close', () => {
     const room = rooms.leave(webSocket);
-    if (room) rooms.broadcast(room);
+    broadcastDeparture(room);
   });
 });
 

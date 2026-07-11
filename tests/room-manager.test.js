@@ -97,6 +97,8 @@ test('遊戲開始後斷線玩家由中級電腦原座位接手', () => {
   assert.equal(room.players[0].isAI, true);
   assert.equal(room.players[0].level, 'intermediate');
   assert.match(room.players[0].name, /電腦接手/);
+  assert.equal(room.game.players[0].isAI, true);
+  assert.equal(room.game.players[0].level, 'intermediate');
 });
 
 test('正規化暱稱與房號', () => {
