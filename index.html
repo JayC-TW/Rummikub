@@ -136,6 +136,16 @@
   </section>
 
   <div id="toast"></div>
+  <div id="action-dialog" class="action-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="action-dialog-title">
+    <div class="action-dialog-card">
+      <h2 id="action-dialog-title">確認操作</h2>
+      <p id="action-dialog-message"></p>
+      <div class="action-dialog-buttons">
+        <button id="btn-dialog-cancel" class="secondary-btn" type="button">取消</button>
+        <button id="btn-dialog-confirm" class="primary-btn" type="button">確認</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script type="module" src="js/ui.js"></script>

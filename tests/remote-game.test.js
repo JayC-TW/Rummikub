@@ -29,3 +29,24 @@ test('尚無本機牌局時可直接載入多人開局狀態', () => {
   assert.equal(state.players[1].hand.every((tile) => tile.hidden), true);
   assert.deepEqual(state.players[0].hand.slice(0, 3).map((tile) => tile.number), [1, 1, 2]);
 });
+
+test('未破冰時拖到舊牌組會改建新的破冰牌組', () => {
+  const handTile = { uid: 'hand-10', color: 'red', number: 10, isJoker: false };
+  const oldTiles = [1, 2, 3].map((number) => ({ uid: `old-${number}`, color: 'blue', number, isJoker: false }));
+  Game.loadRemoteGame({
+    roomCode: 'TEST',
+    players: [
+      { id: 0, name: 'Jay', isAI: false, level: null, hasMelded: false, hand: [handTile], handCount: 1 },
+      { id: 'guest', name: 'Amy', isAI: false, level: null, hasMelded: false, hand: [], handCount: 14 },
+    ],
+    board: [{ id: 'old-set', tiles: oldTiles }],
+    deckCount: 88,
+    currentPlayerIndex: 0,
+    turnSeconds: 60,
+    round: 1,
+  });
+
+  Game.moveHandTileToSet(handTile.uid, 'old-set');
+  assert.equal(Game.state.draftBoard[0].tiles.length, 3);
+  assert.equal(Game.state.draftBoard[1].tiles[0].uid, handTile.uid);
+});

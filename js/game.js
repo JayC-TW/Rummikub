@@ -213,7 +213,8 @@ export function moveHandTileToNewSet(uid) {
 
 export function moveHandTileToSet(uid, setId) {
   if (!canEditBoardSet(setId)) {
-    toast('尚未破冰，不能加入桌面既有的牌組');
+    moveHandTileToNewSet(uid);
+    toast('尚未破冰，已將手牌放入新的破冰牌組');
     return;
   }
   const idx = state.draftHand.findIndex((t) => t.uid === uid);

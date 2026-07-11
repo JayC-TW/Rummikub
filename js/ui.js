@@ -121,6 +121,7 @@ function renderBoard() {
   const area = $('#board-area');
   area.innerHTML = '';
   const human = isHumanTurn();
+  area.dataset.dropzone = human ? 'newset' : '';
   const sets = currentBoardSets();
 
   sets.forEach((set) => {
@@ -149,7 +150,9 @@ function renderBoard() {
     const newZone = document.createElement('div');
     newZone.className = 'tile-set newset-zone';
     newZone.dataset.dropzone = 'newset';
-    newZone.textContent = '+ 拖曳至此建立新組合';
+    newZone.textContent = Game.getCurrentPlayer().hasMelded
+      ? '+ 拖曳至此建立新組合'
+      : '+ 破冰區：將手牌拖曳至此（需達 30 點）';
     area.appendChild(newZone);
   }
 }
@@ -373,18 +376,17 @@ function setupButtons() {
   $('#btn-restart').addEventListener('click', () => {
     const isRemote = Game.state?.remote;
     const question = isRemote ? '確定要離開多人牌局嗎？離開後將由電腦接手。' : '確定要重新開始嗎？目前對局將直接結束。';
-    if (!window.confirm(question)) return;
-    if (isRemote) {
-      disconnectMultiplayer();
-    }
-    Game.abortGame();
-    endDragCleanup();
-    clearSelection();
-    $('#game-screen').hidden = true;
-    $('#end-screen').hidden = true;
-    $('#start-screen').hidden = false;
-    $('#btn-restart').textContent = '重新開始';
-    updateStatsLine();
+    openActionDialog(question, () => {
+      if (isRemote) disconnectMultiplayer();
+      Game.abortGame();
+      endDragCleanup();
+      clearSelection();
+      $('#game-screen').hidden = true;
+      $('#end-screen').hidden = true;
+      $('#start-screen').hidden = false;
+      $('#btn-restart').textContent = '重新開始';
+      updateStatsLine();
+    });
   });
   $('#btn-music').addEventListener('click', () => {
     const on = toggleMusic();
@@ -401,6 +403,31 @@ function setupButtons() {
     clearSelection();
     if (Game.state?.remote) playMultiplayerTurn(Game.state.draftBoard, Game.state.draftHand);
     else Game.endTurnWithPlay();
+  });
+}
+
+let pendingDialogAction = null;
+
+function openActionDialog(message, action) {
+  pendingDialogAction = action;
+  $('#action-dialog-message').textContent = message;
+  $('#action-dialog').hidden = false;
+}
+
+function closeActionDialog() {
+  pendingDialogAction = null;
+  $('#action-dialog').hidden = true;
+}
+
+function setupActionDialog() {
+  $('#btn-dialog-cancel').addEventListener('click', closeActionDialog);
+  $('#btn-dialog-confirm').addEventListener('click', () => {
+    const action = pendingDialogAction;
+    closeActionDialog();
+    action?.();
+  });
+  $('#action-dialog').addEventListener('click', (event) => {
+    if (event.target === $('#action-dialog')) closeActionDialog();
   });
 }
 
@@ -651,3 +678,4 @@ $('#btn-play-again').addEventListener('click', () => {
 setupStartScreen();
 setupButtons();
 setupAreaLevelDrop();
+setupActionDialog();
