@@ -146,6 +146,13 @@ export class RoomManager {
     if (!room?.started || !room.game) throw new Error('遊戲尚未開始');
     return { room, playerId: membership.playerId, state: gameViewFor(room, membership.playerId) };
   }
+
+  restart(socket) {
+    const { room } = this.gameFor(socket);
+    if (!room.game.gameOver) throw new Error('目前牌局尚未結束');
+    room.game = createGameSession(room);
+    return room;
+  }
 }
 
 export function normalizeMaxPlayers(value) {

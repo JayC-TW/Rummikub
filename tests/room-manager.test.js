@@ -90,6 +90,25 @@ test('房主可在漏接開局事件後重新同步牌局', () => {
   assert.equal(synced.state.players[0].hand.length, 14);
 });
 
+test('結束後可在原房間重新開始', () => {
+  const manager = new RoomManager();
+  const hostSocket = socket();
+  const created = manager.createRoom('Jay', hostSocket, config);
+  const firstGame = manager.start(hostSocket).game;
+  firstGame.gameOver = true;
+  firstGame.winnerId = firstGame.players[0].id;
+  manager.broadcastGame(manager.rooms.get(created.room.code));
+  const result = hostSocket.messages.at(-1).payload;
+  assert.equal(result.gameOver, true);
+  assert.equal(result.winnerId, 0);
+  assert.equal(typeof result.players[0].score, 'number');
+  const room = manager.restart(hostSocket);
+  assert.equal(room.code, created.room.code);
+  assert.notEqual(room.game, firstGame);
+  assert.equal(room.game.gameOver, false);
+  assert.equal(room.game.players.every((player) => player.hand.length === 14), true);
+});
+
 test('遊戲開始後斷線玩家由中級電腦原座位接手', () => {
   const manager = new RoomManager();
   const hostSocket = socket();

@@ -1,4 +1,4 @@
-import { COLORS, MIN_MELD_VALUE, createDeck, isValidBoard } from '../js/rules.js';
+import { COLORS, MIN_MELD_VALUE, createDeck, handScore, isValidBoard } from '../js/rules.js';
 import { decideAiTurn } from '../js/ai.js';
 
 function sortHand(hand) {
@@ -42,6 +42,7 @@ export function gameViewFor(room, viewerId) {
     ...game.players.slice(0, viewerIndex),
   ];
   const currentPlayerId = game.players[game.currentPlayerIndex].id;
+  const winner = game.players.find((player) => player.id === game.winnerId);
 
   return {
     roomCode: room.code,
@@ -53,6 +54,7 @@ export function gameViewFor(room, viewerId) {
       hasMelded: player.hasMelded,
       hand: index === 0 ? player.hand : [],
       handCount: player.hand.length,
+      score: game.gameOver ? handScore(player.hand) : null,
     })),
     board: game.board,
     deckCount: game.deck.length,
@@ -60,6 +62,8 @@ export function gameViewFor(room, viewerId) {
     turnSeconds: game.turnSeconds,
     turnDeadline: game.turnDeadline ?? null,
     round: game.round,
+    gameOver: game.gameOver,
+    winnerId: winner ? (winner.id === viewerId ? 0 : winner.id) : null,
   };
 }
 

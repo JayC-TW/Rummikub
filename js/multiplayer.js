@@ -41,6 +41,7 @@ export const joinRoom = (roomCode, playerName) => send('room:join', { roomCode, 
 export const leaveRoom = () => send('room:leave');
 export const startMultiplayerGame = () => send('game:start');
 export const syncMultiplayerGame = () => send('game:sync');
+export const restartMultiplayerGame = () => send('game:restart');
 export const drawMultiplayerTile = () => send('turn:draw');
 export const playMultiplayerTurn = (board, hand) => send('turn:play', { board, hand });
 export function disconnectMultiplayer() {

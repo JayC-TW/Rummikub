@@ -268,6 +268,7 @@ html, body {
 #end-scores { margin: 16px 0; }
 .score-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.1); font-size: 15px; }
 .score-row.winner { color: var(--accent); font-weight: 700; }
+.end-room-btn { width: 100%; margin-top: 10px; }
 
 /* ===== Toast ===== */
 #toast {

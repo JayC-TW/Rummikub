@@ -148,6 +148,14 @@ wss.on('connection', (webSocket) => {
         return;
       }
 
+      if (message.type === 'game:restart') {
+        const room = rooms.restart(webSocket);
+        armTurnClock(room);
+        rooms.broadcastGame(room);
+        scheduleAiTurn(room);
+        return;
+      }
+
       if (message.type === 'turn:draw') {
         const { room, playerId } = rooms.gameFor(webSocket);
         applyHumanDraw(room, playerId);

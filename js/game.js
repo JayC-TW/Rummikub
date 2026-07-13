@@ -65,8 +65,8 @@ export function createGame(config) {
     timerHandle: null,
     turnStartSnapshot: null,
     consecutivePasses: 0,
-    gameOver: false,
-    winnerId: null,
+    gameOver: remoteState.gameOver,
+    winnerId: remoteState.winnerId,
     round: 1,
   };
 

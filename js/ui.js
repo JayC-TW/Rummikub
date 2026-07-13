@@ -6,7 +6,7 @@ import * as Game from './game.js';
 import { classifySet, COLOR_NAMES } from './rules.js';
 import { LEVEL_LABEL } from './game.js';
 import { startMusic, toggleMusic } from './music.js';
-import { connectMultiplayer, createRoom, disconnectMultiplayer, drawMultiplayerTile, joinRoom, playMultiplayerTurn, startMultiplayerGame, syncMultiplayerGame } from './multiplayer.js';
+import { connectMultiplayer, createRoom, disconnectMultiplayer, drawMultiplayerTile, joinRoom, playMultiplayerTurn, restartMultiplayerGame, startMultiplayerGame, syncMultiplayerGame } from './multiplayer.js';
 
 // ---------- 共用小工具 ----------
 
@@ -538,6 +538,10 @@ async function ensureMultiplayerConnection() {
 function showMultiplayerGame(gameState) {
   Game.loadRemoteGame(gameState);
   clearSelection();
+  if (gameState.gameOver) {
+    showEndScreen();
+    return;
+  }
   $('#start-screen').hidden = true;
   $('#end-screen').hidden = true;
   $('#game-screen').hidden = false;
@@ -655,12 +659,15 @@ function showEndScreen() {
   $('#game-screen').hidden = true;
   $('#end-screen').hidden = false;
   const winner = Game.state.players.find((p) => p.id === Game.state.winnerId);
-  $('#end-title').textContent = winner.id === 0 ? '🎉 你贏了！' : `${winner.name} 獲勝`;
+  $('#end-title').textContent = winner?.id === 0 ? '🎉 你贏了！' : `${winner?.name ?? '未知玩家'} 獲勝`;
+  const remote = Boolean(Game.state.remote);
+  $('#btn-play-again').textContent = remote ? '重新開始' : '再玩一局';
+  $('#btn-end-multiplayer').hidden = !remote;
 
   const scoresEl = $('#end-scores');
   scoresEl.innerHTML = '';
   const rows = Game.state.players
-    .map((p) => ({ p, score: p.hand.reduce((s, t) => s + (t.isJoker ? 30 : t.number), 0) }))
+    .map((p) => ({ p, score: p.score ?? p.hand.reduce((s, t) => s + (t.isJoker ? 30 : t.number), 0) }))
     .sort((a, b) => a.score - b.score);
   for (const { p, score } of rows) {
     const row = document.createElement('div');
@@ -675,8 +682,22 @@ function showEndScreen() {
 // type="module" 腳本會在 DOM 解析完成後才執行，故可直接綁定事件。
 
 $('#btn-play-again').addEventListener('click', () => {
+  if (Game.state?.remote) {
+    restartMultiplayerGame();
+    return;
+  }
   $('#end-screen').hidden = true;
   $('#start-screen').hidden = false;
+});
+
+$('#btn-end-multiplayer').addEventListener('click', () => {
+  disconnectMultiplayer();
+  Game.abortGame();
+  $('#end-screen').hidden = true;
+  $('#game-screen').hidden = true;
+  $('#start-screen').hidden = false;
+  $('#btn-end-multiplayer').hidden = true;
+  $('#btn-play-again').textContent = '再玩一局';
 });
 
 setupStartScreen();
