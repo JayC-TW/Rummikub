@@ -65,8 +65,8 @@ export function createGame(config) {
     timerHandle: null,
     turnStartSnapshot: null,
     consecutivePasses: 0,
-    gameOver: remoteState.gameOver,
-    winnerId: remoteState.winnerId,
+    gameOver: false,
+    winnerId: null,
     round: 1,
   };
 
@@ -102,8 +102,8 @@ export function loadRemoteGame(remoteState) {
       handLength: players[0].hand.length,
     },
     consecutivePasses: 0,
-    gameOver: false,
-    winnerId: null,
+    gameOver: remoteState.gameOver,
+    winnerId: remoteState.winnerId,
     round: remoteState.round,
     remote: true,
     roomCode: remoteState.roomCode,

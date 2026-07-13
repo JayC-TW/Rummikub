@@ -30,6 +30,35 @@ test('尚無本機牌局時可直接載入多人開局狀態', () => {
   assert.deepEqual(state.players[0].hand.slice(0, 3).map((tile) => tile.number), [1, 1, 2]);
 });
 
+test('多人結算保留真人與電腦勝者識別', () => {
+  const base = {
+    roomCode: 'TEST',
+    players: [
+      { id: 0, name: 'Jay', isAI: false, level: null, hasMelded: true, hand: [], handCount: 0, score: 0 },
+      { id: 'ai-winner', name: '電腦A', isAI: true, level: 'basic', hasMelded: true, hand: [], handCount: 0, score: 0 },
+    ],
+    board: [],
+    deckCount: 0,
+    currentPlayerIndex: 0,
+    turnSeconds: 60,
+    turnDeadline: null,
+    round: 10,
+    gameOver: true,
+  };
+
+  let state = Game.loadRemoteGame({ ...base, winnerId: 0 });
+  assert.equal(state.players.find((player) => player.id === state.winnerId).name, 'Jay');
+  state = Game.loadRemoteGame({ ...base, winnerId: 'ai-winner' });
+  assert.equal(state.players.find((player) => player.id === state.winnerId).name, '電腦A');
+});
+
+test('單人開局不依賴多人遠端狀態', () => {
+  const state = Game.createGame({ aiCount: 0, aiLevels: [], turnSeconds: Infinity });
+  assert.equal(state.gameOver, false);
+  assert.equal(state.winnerId, null);
+  Game.abortGame();
+});
+
 test('未破冰時拖到舊牌組會改建新的破冰牌組', () => {
   const handTile = { uid: 'hand-10', color: 'red', number: 10, isJoker: false };
   const oldTiles = [1, 2, 3].map((number) => ({ uid: `old-${number}`, color: 'blue', number, isJoker: false }));
